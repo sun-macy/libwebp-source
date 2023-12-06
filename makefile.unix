@@ -15,10 +15,11 @@
 # These flags assume you have libpng, libjpeg, libtiff and libgif installed. If
 # not, either follow the install instructions below or just comment out the next
 # four lines.
-EXTRA_FLAGS= -DWEBP_HAVE_PNG -DWEBP_HAVE_JPEG -DWEBP_HAVE_TIFF
-DWEBP_LIBS= -lpng -lz
-CWEBP_LIBS= $(DWEBP_LIBS) -ljpeg -ltiff
-GIF_LIBS = -lgif
+        # ADJ: commented four lines out
+# EXTRA_FLAGS= -DWEBP_HAVE_PNG -DWEBP_HAVE_JPEG -DWEBP_HAVE_TIFF
+# DWEBP_LIBS= -lpng -lz
+# CWEBP_LIBS= $(DWEBP_LIBS) -ljpeg -ltiff
+# GIF_LIBS = -lgif
 
 ifeq ($(strip $(shell uname)), Darwin)
   # Work around a problem linking tables marked as common symbols,
@@ -69,11 +70,15 @@ endif
 # EXTRA_FLAGS += -DWEBP_SWAP_16BIT_CSP=1
 
 # Extra flags to enable multi-threading
-EXTRA_FLAGS += -DWEBP_USE_THREAD
-EXTRA_LIBS += -lpthread
+        # ADJ: commented all multi-threading flag lines out
+#EXTRA_FLAGS += -DWEBP_USE_THREAD
+        # ADJ: added this -pthread flag line
+#EXTRA_FLAGS += -pthread
+#EXTRA_LIBS += -lpthread
 
 # Control symbol visibility. Comment out if your compiler doesn't support it.
-EXTRA_FLAGS += -fvisibility=hidden
+        # ADJ: commented out
+# EXTRA_FLAGS += -fvisibility=hidden
 
 # Extra flags to emulate C89 strictness with the full ANSI
 EXTRA_FLAGS += -Wextra -Wold-style-definition
@@ -95,7 +100,7 @@ endif
 # -> seems to make the overall lib slower: -fno-split-wide-types
 
 # MIPS (MSA) 32-bit build specific flags for mips32r5 (p5600):
-# EXTRA_FLAGS += -mips32r5 -mabi=32 -mtune=p5600 -mmsa -mfp64
+# EXTRA_FLAGS += -mips32r5 -mabi=32 -mtune=p5600 -mmsa -mfp64	
 # EXTRA_FLAGS += -msched-weight -mload-store-pairs
 
 # MIPS (MSA) 64-bit build specific flags for mips64r6 (i6400):
@@ -104,20 +109,31 @@ endif
 
 #### Nothing should normally be changed below this line ####
 
-AR = ar
+AR = ../rlbox_wasm2c_sandbox/build/_deps/wasiclang-src/bin/ar
 ARFLAGS = r
-CPPFLAGS = -I. -Isrc/ -Wall
+CPPFLAGS = -I. -Isrc/ -Isrc/webp/ -Wall
 ifeq ($(DEBUG), 1)
   CFLAGS = -g
 else
   CFLAGS = -O3 -DNDEBUG
 endif
+EXTRA_FLAGS += --sysroot ../rlbox_wasm2c_sandbox/build/_deps/wasiclang-src/share/wasi-sysroot
+# CFLAGS += --whole-archive
 CFLAGS += $(EXTRA_FLAGS)
-CC = gcc
+        # ADJ: replaced line
+        # CC = gcc
+CC = ../rlbox_wasm2c_sandbox/build/_deps/wasiclang-src/bin/clang
+        # ADJ: added line below
+CCPP = ../rlbox_wasm2c_sandbox/build/_deps/wasiclang-src/bin/clang++  
+        # ADJ: added line below
 INSTALL = install
 GROFF = /usr/bin/groff
 COL = /usr/bin/col
-LDFLAGS = $(EXTRA_LIBS) $(EXTRA_FLAGS) -lm
+        # ADJ: added line below
+LD = ../rlbox_wasm2c_sandbox/build/_deps/wasiclang-src/bin/wasm-ld
+        # ADJ: edited line below
+LDFLAGS = $(EXTRA_LIBS) $(EXTRA_FLAGS) -Wl,--export-all -Wl,--stack-first -Wl,-z,stack-size=262144
+LDFLAGS += -Wl,--no-entry -Wl,--growable-table -Wl,--import-memory -Wl,--import-table -Wl,--whole-archive
 
 ifdef BITTRACE
 CFLAGS += -DBITTRACE=$(BITTRACE)
@@ -134,6 +150,7 @@ SHARPYUV_OBJS = \
     sharpyuv/sharpyuv_gamma.o \
     sharpyuv/sharpyuv_neon.o \
     sharpyuv/sharpyuv_sse2.o \
+# ../rlbox_wasm2c_sandbox/c_src/wasm2c_sandbox_wrapper.o \
 
 DEC_OBJS = \
     src/dec/alpha_dec.o \
@@ -146,10 +163,12 @@ DEC_OBJS = \
     src/dec/vp8_dec.o \
     src/dec/vp8l_dec.o \
     src/dec/webp_dec.o \
+# ../rlbox_wasm2c_sandbox/c_src/wasm2c_sandbox_wrapper.o \
 
 DEMUX_OBJS = \
     src/demux/anim_decode.o \
     src/demux/demux.o \
+# ../rlbox_wasm2c_sandbox/c_src/wasm2c_sandbox_wrapper.o \
 
 DSP_DEC_OBJS = \
     src/dsp/alpha_processing.o \
@@ -270,6 +289,7 @@ MUX_OBJS = \
     src/mux/muxedit.o \
     src/mux/muxinternal.o \
     src/mux/muxread.o \
+# ../rlbox_wasm2c_sandbox/c_src/wasm2c_sandbox_wrapper.o \
 
 UTILS_DEC_OBJS = \
     src/utils/bit_reader_utils.o \
@@ -291,12 +311,16 @@ EXTRA_OBJS = \
     extras/extras.o \
     extras/quality_estimate.o \
 
+# TODO: must add .o to this
 LIBWEBPDECODER_OBJS = $(DEC_OBJS) $(DSP_DEC_OBJS) $(UTILS_DEC_OBJS)
 LIBWEBP_OBJS = $(LIBWEBPDECODER_OBJS) $(ENC_OBJS) \
                $(DSP_ENC_OBJS) $(UTILS_ENC_OBJS)
+# TODO: and here
 LIBWEBPMUX_OBJS = $(MUX_OBJS)
+# TODO: and here
 LIBWEBPDEMUX_OBJS = $(DEMUX_OBJS)
 LIBWEBPEXTRA_OBJS = $(EXTRA_OBJS)
+# TODO: and here
 LIBSHARPYUV_OBJS = $(SHARPYUV_OBJS)
 
 HDRS_INSTALLED = \
@@ -349,6 +373,12 @@ HDRS = \
     src/utils/rescaler_utils.h \
     src/utils/thread_utils.h \
     src/utils/utils.h \
+	src/webp/decode.h \
+    src/webp/demux.h \
+    src/webp/encode.h \
+    src/webp/mux.h \
+    src/webp/mux_types.h \
+    src/webp/types.h \
     src/webp/format_constants.h \
     $(HDRS_INSTALLED) \
     $(SHARPYUV_HDRS_INSTALLED) \
@@ -360,6 +390,15 @@ OUT_LIBS += imageio/libimageenc.a
 OUT_LIBS += src/libwebpdecoder.a
 OUT_LIBS += src/libwebp.a
 OUT_LIBS += sharpyuv/libsharpyuv.a
+# OUT_LIBS = examples/libexample_util.wasm
+# OUT_LIBS += imageio/libimageio_util.wasm
+# OUT_LIBS += imageio/libimagedec.wasm
+# OUT_LIBS += imageio/libimageenc.wasm
+OUT_LIBS += src/libwebpdecoder.wasm
+OUT_LIBS += src/libwebp.wasm
+OUT_LIBS += sharpyuv/libsharpyuv.wasm
+# OUT_LIBS += src/mux/libwebpmux.wasm
+# OUT_LIBS += src/demux/libwebpdemux.wasm
 EXTRA_LIB = extras/libwebpextras.a
 OUT_EXAMPLES = examples/cwebp examples/dwebp
 EXTRA_EXAMPLES = examples/gif2webp examples/vwebp examples/webpmux \
@@ -375,6 +414,7 @@ ifeq ($(MAKECMDGOALS),clean)
 endif
 
 ex: $(OUT_EXAMPLES)
+sunlib: $(OUT_EXAMPLES) $(OUT_LIBS)
 all: ex $(EXTRA_EXAMPLES) $(OTHER_EXAMPLES)
 extras: $(EXTRA_LIB)
 
@@ -393,7 +433,7 @@ src/utils/bit_writer_utils.o: src/utils/endian_inl_utils.h
 
 %.o: %.c $(HDRS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-
+	
 examples/libanim_util.a: $(ANIM_UTIL_OBJS)
 examples/libexample_util.a: $(EX_UTIL_OBJS)
 examples/libgifdec.a: $(GIFDEC_OBJS)
@@ -409,6 +449,22 @@ sharpyuv/libsharpyuv.a: $(LIBSHARPYUV_OBJS)
 
 %.a:
 	$(AR) $(ARFLAGS) $@ $^
+
+# examples/libanim_util.wasm: $(ANIM_UTIL_OBJS)
+# examples/libexample_util.wasm: $(EX_UTIL_OBJS)
+# examples/libgifdec.wasm: $(GIFDEC_OBJS)
+# extras/libwebpextras.wasm: $(LIBWEBPEXTRA_OBJS)
+# imageio/libimagedec.wasm: $(EX_FORMAT_DEC_OBJS)
+# imageio/libimageenc.wasm: $(EX_FORMAT_ENC_OBJS)
+# imageio/libimageio_util.wasm: $(IMAGE_UTIL_OBJS)
+src/libwebpdecoder.wasm: $(LIBWEBPDECODER_OBJS)
+src/libwebp.wasm: $(LIBWEBP_OBJS) $(SHARPYUV_OBJS)
+# src/mux/libwebpmux.wasm: $(LIBWEBPMUX_OBJS)
+# src/demux/libwebpdemux.wasm: $(LIBWEBPDEMUX_OBJS)
+sharpyuv/libsharpyuv.wasm: $(LIBSHARPYUV_OBJS)
+
+%.wasm:
+	$(CC) $(LDFLAGS) $(CFLAGS) $(CPPFLAGS) -o $*.wasm $^ ../rlbox_wasm2c_sandbox/c_src/wasm2c_sandbox_wrapper.o
 
 examples/anim_diff: examples/anim_diff.o $(ANIM_UTIL_OBJS) $(GIFDEC_OBJS)
 examples/anim_dump: examples/anim_dump.o $(ANIM_UTIL_OBJS) $(GIFDEC_OBJS)
